@@ -1,5 +1,16 @@
 /* Are.na Channels — masonry grid */
 
+/* Full width: the plugin tags the view container of any pane showing an
+   arena grid, lifting it out of "Readable line length". */
+.markdown-preview-view.arena-full-width .markdown-preview-sizer,
+.arena-full-width .markdown-preview-sizer,
+.markdown-source-view.arena-full-width .cm-sizer,
+.arena-full-width .cm-sizer,
+.arena-full-width .cm-contentContainer {
+	max-width: 100% !important;
+	width: 100% !important;
+}
+
 .arena-grid {
 	column-width: var(--arena-col, 240px);
 	column-gap: var(--arena-gap, 14px);

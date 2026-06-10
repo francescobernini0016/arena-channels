@@ -6,10 +6,11 @@ export interface ArenaBlock {
 	class?: string;
 	type?: string;
 	base_class?: string;
-	title?: string;
+	title?: string | null;
 	generated_title?: string;
-	description?: string | null;
-	content?: string | null;
+	description?: unknown;
+	/** v2: plain string. v3: { markdown, html, plain }. */
+	content?: string | { markdown?: string; html?: string; plain?: string } | null;
 	content_html?: string | null;
 	source?: { url?: string } | null;
 	attachment?: { url?: string } | null;
@@ -41,8 +42,8 @@ function pick(obj: unknown, ...paths: string[]): string | null {
 	return null;
 }
 
-export function blockTitle(b: ArenaBlock): string {
-	return pick(b, "title", "generated_title") ?? "Untitled";
+export function blockTitle(b: ArenaBlock): string | null {
+	return pick(b, "title", "generated_title");
 }
 
 export function blockId(b: ArenaBlock): number | null {
@@ -80,7 +81,7 @@ export function blockSourceUrl(b: ArenaBlock): string | null {
 }
 
 export function blockText(b: ArenaBlock): string | null {
-	return pick(b, "content", "content_html");
+	return pick(b, "content.plain", "content.markdown", "content", "content_html");
 }
 
 export function isTextBlock(b: ArenaBlock): boolean {

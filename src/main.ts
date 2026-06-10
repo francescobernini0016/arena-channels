@@ -19,6 +19,7 @@ interface BlockParams {
 	variant: ImageVariant;
 	caption: boolean;
 	link: boolean;
+	fullWidth: boolean;
 }
 
 interface RenderInstance {
@@ -80,6 +81,14 @@ export default class ArenaChannelsPlugin extends Plugin {
 	onunload(): void {
 		this.instances.clear();
 		this.cache.clear();
+		document
+			.querySelectorAll(".arena-full-width")
+			.forEach((el) => el.removeClass("arena-full-width"));
+	}
+
+	/** Re-render every live grid (used when settings change). */
+	async rerenderGrids(): Promise<void> {
+		await this.refreshAll();
 	}
 
 	/* ---------------------------------------------------------------- params */
@@ -92,6 +101,7 @@ export default class ArenaChannelsPlugin extends Plugin {
 			variant: this.settings.imageVariant,
 			caption: this.settings.showCaption,
 			link: this.settings.showLink,
+			fullWidth: this.settings.fullWidth,
 		};
 
 		for (const raw of source.split("\n")) {
@@ -129,6 +139,11 @@ export default class ArenaChannelsPlugin extends Plugin {
 				case "links":
 					p.link = this.parseBool(value, p.link);
 					break;
+				case "fullwidth":
+				case "full-width":
+				case "wide":
+					p.fullWidth = this.parseBool(value, p.fullWidth);
+					break;
 			}
 		}
 		return p;
@@ -154,6 +169,7 @@ export default class ArenaChannelsPlugin extends Plugin {
 	private async renderGrid(instance: RenderInstance): Promise<void> {
 		const { el, params } = instance;
 		el.empty();
+		this.applyFullWidth(el, params.fullWidth);
 
 		const grid = el.createDiv({ cls: "arena-grid" });
 		grid.style.setProperty("--arena-col", `${params.columns}px`);
@@ -182,6 +198,26 @@ export default class ArenaChannelsPlugin extends Plugin {
 		}
 	}
 
+	/**
+	 * Lift the note out of "Readable line length" when the grid wants the
+	 * full pane width. The class lands on the view container, so it only
+	 * affects panes that actually show an arena block.
+	 */
+	private applyFullWidth(el: HTMLElement, on: boolean): void {
+		const apply = () => {
+			const view = el.closest<HTMLElement>(
+				".markdown-source-view, .markdown-preview-view",
+			);
+			view?.toggleClass("arena-full-width", on);
+		};
+		if (el.isConnected) {
+			apply();
+		} else {
+			// In live preview the element may not be attached yet.
+			requestAnimationFrame(apply);
+		}
+	}
+
 	private renderCell(grid: HTMLElement, b: ArenaBlock, params: BlockParams): void {
 		const cell = grid.createDiv({ cls: "arena-cell" });
 		const id = blockId(b);
@@ -192,7 +228,7 @@ export default class ArenaChannelsPlugin extends Plugin {
 		if (img) {
 			const host = url ? cell.createEl("a", { href: url }) : cell;
 			host.createEl("img", {
-				attr: { src: img, alt: title, loading: "lazy" },
+				attr: { src: img, alt: title ?? "", loading: "lazy" },
 			});
 		} else if (isTextBlock(b)) {
 			cell.createDiv({ cls: "arena-text", text: blockText(b) ?? "" });
@@ -204,7 +240,7 @@ export default class ArenaChannelsPlugin extends Plugin {
 			}
 		}
 
-		if (params.caption) {
+		if (params.caption && title) {
 			cell.createDiv({ cls: "arena-cap", text: title });
 		}
 		if (params.link && url) {

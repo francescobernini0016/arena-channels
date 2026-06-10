@@ -9,6 +9,7 @@ export interface ArenaSettings {
 	imageVariant: ImageVariant;
 	showCaption: boolean;
 	showLink: boolean;
+	fullWidth: boolean;
 	cacheMinutes: number;
 }
 
@@ -19,6 +20,7 @@ export const DEFAULT_SETTINGS: ArenaSettings = {
 	imageVariant: "medium",
 	showCaption: true,
 	showLink: true,
+	fullWidth: true,
 	cacheMinutes: 30,
 };
 
@@ -107,6 +109,21 @@ export class ArenaSettingTab extends PluginSettingTab {
 				t.setValue(this.plugin.settings.showCaption).onChange(async (value) => {
 					this.plugin.settings.showCaption = value;
 					await this.plugin.saveSettings();
+				}),
+			);
+
+		new Setting(containerEl)
+			.setName("Full width")
+			.setDesc(
+				"Use the full pane width for notes that contain an Are.na grid, " +
+					"ignoring 'Readable line length'. Can be overridden per block " +
+					"with 'fullwidth: false'.",
+			)
+			.addToggle((t) =>
+				t.setValue(this.plugin.settings.fullWidth).onChange(async (value) => {
+					this.plugin.settings.fullWidth = value;
+					await this.plugin.saveSettings();
+					await this.plugin.rerenderGrids();
 				}),
 			);
 
