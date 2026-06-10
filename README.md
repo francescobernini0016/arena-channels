@@ -1,6 +1,6 @@
 # Are.na Channels
 
-Render [Are.na](https://www.are.na) channels as live, responsive masonry grids inside your Obsidian notes — with a single code block. No file generation, no CSS snippets, works in both Reading view and Live Preview.
+Render [Are.na](https://www.are.na) channels as live, responsive masonry grids inside your Obsidian notes with a single code block. Works in both Reading view and Live Preview.
 
 > **Unofficial.** This plugin is an independent community project. It is not affiliated with, endorsed by, or supported by Are.na. It uses the public Are.na API.
 
@@ -16,7 +16,7 @@ channel: arena-influences
 ```
 ````
 
-That's it. The channel renders as a masonry grid that adapts its column count to the note width.
+The channel renders as a masonry grid that adapts its column count to the note width.
 
 You can paste a full URL instead of a slug — it's extracted automatically:
 
