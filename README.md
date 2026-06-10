@@ -64,6 +64,20 @@ fullwidth: false
 - **Cache duration** — how long fetched data is reused before refetching.
   Run **Refresh Are.na grids** from the command palette to force an update.
 
+## Network use
+
+This plugin connects to the internet to do its job:
+
+- **api.are.na** — to fetch the contents of the channels you embed.
+  Your access token, if set, is sent only here as an `Authorization` header.
+- **Are.na image CDN** (images.are.na / CloudFront) — block images are
+  loaded directly from Are.na's image servers.
+
+No other servers are contacted. No telemetry or usage data is collected.
+An Are.na account (Personal Access Token) is required only for private
+channels. The token is stored locally in your vault's plugin folder
+(`data.json`), in plain text.
+
 ## Install
 
 ### From the community store
