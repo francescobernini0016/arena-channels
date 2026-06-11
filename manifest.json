@@ -1,10 +1,10 @@
 {
-  "id": "arena-channels",
-  "name": "Are.na Channels",
-  "version": "1.0.0",
-  "minAppVersion": "1.4.0",
-  "description": "Render Are.na channels as live, responsive masonry grids inside your notes with a simple code block.",
-  "author": "Francesco Bernini",
-  "authorUrl": "https://www.are.na/francesco-bernini",
-  "isDesktopOnly": false
+	"id": "arena-channels",
+	"name": "Are.na Channels",
+	"version": "1.0.1",
+	"minAppVersion": "1.4.0",
+	"description": "Render Are.na channels as live, responsive masonry grids inside your notes with a simple code block.",
+	"author": "Francesco Bernini",
+	"authorUrl": "https://www.are.na/francesco-bernini",
+	"isDesktopOnly": false
 }

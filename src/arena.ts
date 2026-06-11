@@ -125,10 +125,16 @@ export async function fetchChannelBlocks(
 
 		// v3 reports pagination in `meta`; v2 exposes `total_pages` at top level.
 		const meta = json.meta ?? {};
-		const hasMore =
-			meta.has_more_pages ??
-			(meta.next_page != null) ??
-			(json.total_pages != null ? page < json.total_pages : false);
+		let hasMore: boolean;
+		if (meta.has_more_pages != null) {
+			hasMore = meta.has_more_pages;
+		} else if (meta.next_page != null) {
+			hasMore = true;
+		} else if (json.total_pages != null) {
+			hasMore = page < json.total_pages;
+		} else {
+			hasMore = false;
+		}
 
 		if (!hasMore || batch.length === 0) break;
 		page += 1;

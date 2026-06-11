@@ -65,7 +65,6 @@ export class ArenaSettingTab extends PluginSettingTab {
 				s
 					.setLimits(120, 480, 10)
 					.setValue(this.plugin.settings.defaultColumns)
-					.setDynamicTooltip()
 					.onChange(async (value) => {
 						this.plugin.settings.defaultColumns = value;
 						await this.plugin.saveSettings();
@@ -79,7 +78,6 @@ export class ArenaSettingTab extends PluginSettingTab {
 				s
 					.setLimits(0, 40, 1)
 					.setValue(this.plugin.settings.gap)
-					.setDynamicTooltip()
 					.onChange(async (value) => {
 						this.plugin.settings.gap = value;
 						await this.plugin.saveSettings();
@@ -149,15 +147,15 @@ export class ArenaSettingTab extends PluginSettingTab {
 				s
 					.setLimits(0, 240, 5)
 					.setValue(this.plugin.settings.cacheMinutes)
-					.setDynamicTooltip()
 					.onChange(async (value) => {
 						this.plugin.settings.cacheMinutes = value;
 						await this.plugin.saveSettings();
 					}),
 			);
 
-		const tip = containerEl.createDiv({ cls: "setting-item-description" });
-		tip.style.marginTop = "1em";
+		const tip = containerEl.createDiv({
+			cls: "setting-item-description arena-settings-tip",
+		});
 		tip.appendText("Usage: add a code block to any note:");
 		const pre = containerEl.createEl("pre");
 		pre.createEl("code", {

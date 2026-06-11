@@ -79,11 +79,16 @@ export default class ArenaChannelsPlugin extends Plugin {
 	}
 
 	onunload(): void {
+		// Grids may live in popout windows, so sweep every document we touched.
+		const docs = new Set<Document>([activeDocument]);
+		this.instances.forEach((inst) => docs.add(inst.el.doc));
 		this.instances.clear();
 		this.cache.clear();
-		document
-			.querySelectorAll(".arena-full-width")
-			.forEach((el) => el.removeClass("arena-full-width"));
+		docs.forEach((doc) =>
+			doc
+				.querySelectorAll(".arena-full-width")
+				.forEach((el) => el.removeClass("arena-full-width")),
+		);
 	}
 
 	/** Re-render every live grid (used when settings change). */
@@ -214,7 +219,7 @@ export default class ArenaChannelsPlugin extends Plugin {
 			apply();
 		} else {
 			// In live preview the element may not be attached yet.
-			requestAnimationFrame(apply);
+			el.win.requestAnimationFrame(apply);
 		}
 	}
 
@@ -280,7 +285,8 @@ export default class ArenaChannelsPlugin extends Plugin {
 	/* ------------------------------------------------------------- settings */
 
 	async loadSettings(): Promise<void> {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const data = (await this.loadData()) as Partial<ArenaSettings> | null;
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
 	}
 
 	async saveSettings(): Promise<void> {
