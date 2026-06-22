@@ -42,6 +42,27 @@
 	word-break: break-word;
 }
 
+.arena-desc {
+	font-size: 11px;
+	line-height: 1.4;
+	opacity: 0.55;
+	margin-top: 3px;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+/* Collapsed: clamp to the first line (the browser adds the trailing ellipsis). */
+.arena-desc.mod-collapsed {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 1;
+	overflow: hidden;
+}
+
+.arena-desc.mod-clickable {
+	cursor: pointer;
+}
+
 .arena-src {
 	font-size: 10px;
 	margin-top: 2px;

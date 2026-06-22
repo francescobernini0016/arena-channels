@@ -20,6 +20,9 @@ export interface ArenaBlock {
 
 export type ImageVariant = "small" | "medium" | "large" | "original";
 
+/** Which field of a block is shown as its caption. */
+export type CaptionSource = "title" | "description" | "none";
+
 const API_BASE = "https://api.are.na/v3";
 
 /** Safely read a nested value by dotted path (e.g. "image.large.url"). */
@@ -82,6 +85,11 @@ export function blockSourceUrl(b: ArenaBlock): string | null {
 
 export function blockText(b: ArenaBlock): string | null {
 	return pick(b, "content.plain", "content.markdown", "content", "content_html");
+}
+
+/** A block's description. v2: plain string. v3: { markdown, html, plain }. */
+export function blockDescription(b: ArenaBlock): string | null {
+	return pick(b, "description.plain", "description.markdown", "description");
 }
 
 export function isTextBlock(b: ArenaBlock): boolean {

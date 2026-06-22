@@ -1,11 +1,13 @@
 import { Editor, MarkdownPostProcessorContext, Notice, Plugin } from "obsidian";
 import {
 	ArenaBlock,
+	blockDescription,
 	blockId,
 	blockImage,
 	blockSourceUrl,
 	blockText,
 	blockTitle,
+	CaptionSource,
 	fetchChannelBlocks,
 	ImageVariant,
 	isTextBlock,
@@ -17,7 +19,8 @@ interface BlockParams {
 	columns: number;
 	gap: number;
 	variant: ImageVariant;
-	caption: boolean;
+	caption: CaptionSource;
+	description: boolean;
 	link: boolean;
 	fullWidth: boolean;
 }
@@ -104,7 +107,8 @@ export default class ArenaChannelsPlugin extends Plugin {
 			columns: this.settings.defaultColumns,
 			gap: this.settings.gap,
 			variant: this.settings.imageVariant,
-			caption: this.settings.showCaption,
+			caption: this.settings.captionSource,
+			description: this.settings.showDescription,
 			link: this.settings.showLink,
 			fullWidth: this.settings.fullWidth,
 		};
@@ -138,7 +142,11 @@ export default class ArenaChannelsPlugin extends Plugin {
 					break;
 				case "caption":
 				case "titles":
-					p.caption = this.parseBool(value, p.caption);
+					p.caption = this.parseCaptionSource(value, p.caption);
+					break;
+				case "description":
+				case "desc":
+					p.description = this.parseBool(value, p.description);
 					break;
 				case "link":
 				case "links":
@@ -166,6 +174,15 @@ export default class ArenaChannelsPlugin extends Plugin {
 		const v = value.toLowerCase();
 		if (["true", "yes", "on", "1"].includes(v)) return true;
 		if (["false", "no", "off", "0"].includes(v)) return false;
+		return fallback;
+	}
+
+	private parseCaptionSource(value: string, fallback: CaptionSource): CaptionSource {
+		const v = value.toLowerCase();
+		// `true`-ish keeps the legacy meaning (show the title).
+		if (["title", "titles", "true", "yes", "on", "1"].includes(v)) return "title";
+		if (["description", "desc"].includes(v)) return "description";
+		if (["none", "false", "no", "off", "0"].includes(v)) return "none";
 		return fallback;
 	}
 
@@ -245,13 +262,50 @@ export default class ArenaChannelsPlugin extends Plugin {
 			}
 		}
 
-		if (params.caption && title) {
-			cell.createDiv({ cls: "arena-cap", text: title });
+		const caption = this.captionFor(b, params.caption);
+		if (caption) {
+			cell.createDiv({ cls: "arena-cap", text: caption });
+		}
+		if (params.description) {
+			const desc = blockDescription(b);
+			if (desc) this.renderDescription(cell, desc);
 		}
 		if (params.link && url) {
 			const s = cell.createDiv({ cls: "arena-src" });
 			s.createEl("a", { href: url, text: "↗ Are.na" });
 		}
+	}
+
+	private captionFor(b: ArenaBlock, source: CaptionSource): string | null {
+		switch (source) {
+			case "title":
+				return blockTitle(b);
+			case "description":
+				return blockDescription(b);
+			case "none":
+				return null;
+		}
+	}
+
+	/**
+	 * Show a block's description collapsed to its first line. When the text
+	 * overflows that line, the box becomes a click target that toggles
+	 * between the clamped first line and the full text.
+	 */
+	private renderDescription(cell: HTMLElement, desc: string): void {
+		const box = cell.createDiv({ cls: "arena-desc mod-collapsed", text: desc });
+		box.win.requestAnimationFrame(() => {
+			// No toggle needed if the whole description already fits one line.
+			if (box.scrollHeight - box.clientHeight <= 1) {
+				box.removeClass("mod-collapsed");
+				return;
+			}
+			box.addClass("mod-clickable");
+			box.setAttribute("role", "button");
+			box.addEventListener("click", () => {
+				box.toggleClass("mod-collapsed", !box.hasClass("mod-collapsed"));
+			});
+		});
 	}
 
 	private renderError(el: HTMLElement, message: string): void {
@@ -285,7 +339,12 @@ export default class ArenaChannelsPlugin extends Plugin {
 	/* ------------------------------------------------------------- settings */
 
 	async loadSettings(): Promise<void> {
-		const data = (await this.loadData()) as Partial<ArenaSettings> | null;
+		const data = ((await this.loadData()) ?? {}) as Record<string, unknown>;
+		// Migrate the pre-1.1 boolean caption toggle to the caption source.
+		if (data.captionSource === undefined && typeof data.showCaption === "boolean") {
+			data.captionSource = data.showCaption ? "title" : "none";
+		}
+		delete data.showCaption;
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
 	}
 

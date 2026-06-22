@@ -1,13 +1,14 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import type ArenaChannelsPlugin from "./main";
-import type { ImageVariant } from "./arena";
+import type { CaptionSource, ImageVariant } from "./arena";
 
 export interface ArenaSettings {
 	token: string;
 	defaultColumns: number;
 	gap: number;
 	imageVariant: ImageVariant;
-	showCaption: boolean;
+	captionSource: CaptionSource;
+	showDescription: boolean;
 	showLink: boolean;
 	fullWidth: boolean;
 	cacheMinutes: number;
@@ -18,7 +19,8 @@ export const DEFAULT_SETTINGS: ArenaSettings = {
 	defaultColumns: 240,
 	gap: 14,
 	imageVariant: "medium",
-	showCaption: true,
+	captionSource: "title",
+	showDescription: false,
 	showLink: true,
 	fullWidth: true,
 	cacheMinutes: 30,
@@ -101,13 +103,39 @@ export class ArenaSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Show titles")
-			.setDesc("Display each block's title under its image.")
+			.setName("Caption")
+			.setDesc(
+				"What to show under each block. Can be overridden per block with " +
+					"'caption: title | description | none'.",
+			)
+			.addDropdown((d) =>
+				d
+					.addOption("title", "Title")
+					.addOption("description", "Description")
+					.addOption("none", "Nothing")
+					.setValue(this.plugin.settings.captionSource)
+					.onChange(async (value) => {
+						this.plugin.settings.captionSource = value as CaptionSource;
+						await this.plugin.saveSettings();
+						await this.plugin.rerenderGrids();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Show description")
+			.setDesc(
+				"Show each block's description below the caption, collapsed to its " +
+					"first line — click it to expand. Overridable per block with " +
+					"'description: true'.",
+			)
 			.addToggle((t) =>
-				t.setValue(this.plugin.settings.showCaption).onChange(async (value) => {
-					this.plugin.settings.showCaption = value;
-					await this.plugin.saveSettings();
-				}),
+				t
+					.setValue(this.plugin.settings.showDescription)
+					.onChange(async (value) => {
+						this.plugin.settings.showDescription = value;
+						await this.plugin.saveSettings();
+						await this.plugin.rerenderGrids();
+					}),
 			);
 
 		new Setting(containerEl)

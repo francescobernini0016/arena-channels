@@ -36,28 +36,36 @@ channel: arena-influences
 columns: 300
 gap: 20
 variant: large
-caption: true
+caption: description
+description: true
 link: false
 fullwidth: false
 ```
 ````
 
-| Key         | Values                                   | Default          |
-| ----------- | ---------------------------------------- | ---------------- |
-| `channel`   | slug or Are.na URL (required)            | —                |
-| `columns`   | target column width in px                | 240              |
-| `gap`       | space between items in px                | 14               |
-| `variant`   | `small` / `medium` / `large` / `original`| medium           |
-| `caption`   | `true` / `false`                         | on               |
-| `link`      | `true` / `false`                         | on               |
-| `fullwidth` | `true` / `false`                         | on               |
+| Key           | Values                                      | Default          |
+| ------------- | ------------------------------------------- | ---------------- |
+| `channel`     | slug or Are.na URL (required)               | —                |
+| `columns`     | target column width in px                   | 240              |
+| `gap`         | space between items in px                   | 14               |
+| `variant`     | `small` / `medium` / `large` / `original`   | medium           |
+| `caption`     | `title` / `description` / `none` (or on/off)| title            |
+| `description` | `true` / `false`                            | off              |
+| `link`        | `true` / `false`                            | on               |
+| `fullwidth`   | `true` / `false`                            | on               |
+
+`caption` chooses what text appears under each block. `description` adds the
+block's description below the caption, collapsed to its first line — click it
+to read the rest. `caption: true` / `false` still work as aliases for `title` /
+`none`.
 
 ## Settings
 
 - **Access token** — a Personal Access Token from
   [are.na/settings/personal-access-tokens](https://www.are.na/settings/personal-access-tokens).
   Required only for private channels; public channels work without one.
-- **Grid** — default column width, gap, image quality, titles, and Are.na links.
+- **Grid** — default column width, gap, image quality, caption source,
+  description preview, and Are.na links.
 - **Full width** — notes containing an Are.na grid use the full pane width,
   ignoring "Readable line length". No CSS snippet or `cssclasses` frontmatter
   needed; disable globally or per block with `fullwidth: false`.
