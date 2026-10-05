@@ -25,6 +25,9 @@ export type CaptionSource = "title" | "description" | "none";
 
 const API_BASE = "https://api.are.na/v3";
 
+/** Identifies this plugin to Are.na. See the note in `fetchChannelBlocks`. */
+const USER_AGENT = "obsidian-arena-channels (+https://github.com/francescobernini0016/arena-channels)";
+
 /** Safely read a nested value by dotted path (e.g. "image.large.url"). */
 function dig(obj: unknown, path: string): unknown {
 	return path.split(".").reduce<unknown>((acc, key) => {
@@ -113,8 +116,14 @@ export async function fetchChannelBlocks(
 		const url = `${API_BASE}/channels/${encodeURIComponent(
 			slug,
 		)}/contents?per=${perPage}&page=${page}`;
-		const params: RequestUrlParam = { url, method: "GET", throw: true };
-		if (token) params.headers = { Authorization: `Bearer ${token}` };
+		const headers: Record<string, string> = {
+			Accept: "application/json",
+			// Are.na's edge rejects the Electron user agent that `requestUrl`
+			// sends by default, answering 403 to every call, so send our own.
+			"User-Agent": USER_AGENT,
+		};
+		if (token) headers.Authorization = `Bearer ${token}`;
+		const params: RequestUrlParam = { url, method: "GET", throw: true, headers };
 
 		const res = await requestUrl(params);
 		const json = res.json as {
