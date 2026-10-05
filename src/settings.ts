@@ -11,6 +11,7 @@ export interface ArenaSettings {
 	showDescription: boolean;
 	showLink: boolean;
 	fullWidth: boolean;
+	openInReadingMode: boolean;
 	cacheMinutes: number;
 }
 
@@ -23,6 +24,7 @@ export const DEFAULT_SETTINGS: ArenaSettings = {
 	showDescription: false,
 	showLink: true,
 	fullWidth: true,
+	openInReadingMode: false,
 	cacheMinutes: 30,
 };
 
@@ -151,6 +153,22 @@ export class ArenaSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 					await this.plugin.rerenderGrids();
 				}),
+			);
+
+		new Setting(containerEl)
+			.setName("Open in Reading view")
+			.setDesc(
+				"When you open a note that contains an Are.na block, switch it to " +
+					"Reading view automatically so the grid shows right away. " +
+					"Press Ctrl/Cmd+E to edit.",
+			)
+			.addToggle((t) =>
+				t
+					.setValue(this.plugin.settings.openInReadingMode)
+					.onChange(async (value) => {
+						this.plugin.settings.openInReadingMode = value;
+						await this.plugin.saveSettings();
+					}),
 			);
 
 		new Setting(containerEl)

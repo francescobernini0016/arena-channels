@@ -69,6 +69,14 @@ to read the rest. `caption: true` / `false` still work as aliases for `title` /
 - **Full width** — notes containing an Are.na grid use the full pane width,
   ignoring "Readable line length". No CSS snippet or `cssclasses` frontmatter
   needed; disable globally or per block with `fullwidth: false`.
+- **Open in Reading view** — when you open a note that contains an Are.na
+  block, switch it to Reading view automatically so the grid shows right away.
+  Off by default. Press Ctrl/Cmd+E to edit.
+
+  > **Note:** this conflicts with plugins that enforce a view mode, such as
+  > [Force note view mode](https://github.com/bwydoogh/obsidian-view-mode-by-frontmatter)
+  > ("View mode by frontmatter"). If one of those sets a default mode, it
+  > overrides this setting. Use one or the other — not both.
 - **Cache duration** — how long fetched data is reused before refetching.
   Run **Refresh Are.na grids** from the command palette to force an update.
 

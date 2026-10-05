@@ -1,4 +1,12 @@
-import { Editor, MarkdownPostProcessorContext, Notice, Plugin } from "obsidian";
+import {
+	Editor,
+	MarkdownPostProcessorContext,
+	MarkdownView,
+	Notice,
+	Plugin,
+	TFile,
+	WorkspaceLeaf,
+} from "obsidian";
 import {
 	ArenaBlock,
 	blockDescription,
@@ -79,6 +87,25 @@ export default class ArenaChannelsPlugin extends Plugin {
 				);
 			},
 		});
+
+		this.registerEvent(
+			this.app.workspace.on("file-open", (file) =>
+				this.maybeOpenInReadingMode(file),
+			),
+		);
+		// A note restored at startup is opened before this handler exists, and
+		// its view may still be deferred; `active-leaf-change` fires once the
+		// view is materialized and shown, which is when the flip actually sticks.
+		this.registerEvent(
+			this.app.workspace.on("active-leaf-change", (leaf) => {
+				if (leaf?.view instanceof MarkdownView) {
+					this.switchToReadingIfArena(leaf.view);
+				}
+			}),
+		);
+		// Belt and suspenders for the initial layout (e.g. the plugin enabled
+		// while a note is already open).
+		this.app.workspace.onLayoutReady(() => this.applyReadingModeToOpenLeaves());
 	}
 
 	onunload(): void {
@@ -92,6 +119,62 @@ export default class ArenaChannelsPlugin extends Plugin {
 				.querySelectorAll(".arena-full-width")
 				.forEach((el) => el.removeClass("arena-full-width")),
 		);
+	}
+
+	/**
+	 * Switch a freshly opened note to Reading view when it contains an arena
+	 * block, so the grid is visible right away instead of as raw source.
+	 */
+	private async maybeOpenInReadingMode(file: TFile | null): Promise<void> {
+		if (!this.settings.openInReadingMode || !file || file.extension !== "md") {
+			return;
+		}
+		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (!view || view.file !== file) return;
+		await this.switchToReadingIfArena(view);
+	}
+
+	/**
+	 * Sweep every open markdown leaf — used once at startup. Works on the
+	 * serialized view state rather than the view instance, so it also handles
+	 * leaves whose views are still deferred (unloaded) after a restart.
+	 */
+	private async applyReadingModeToOpenLeaves(): Promise<void> {
+		if (!this.settings.openInReadingMode) return;
+		for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
+			const vs = leaf.getViewState();
+			const state = vs.state as { file?: string; mode?: string } | undefined;
+			if (!state || typeof state.file !== "string" || state.mode === "preview") {
+				continue;
+			}
+			const file = this.app.vault.getAbstractFileByPath(state.file);
+			if (!(file instanceof TFile)) continue;
+			const content = await this.app.vault.cachedRead(file);
+			if (!this.hasArenaBlock(content)) continue;
+			// Materialize a deferred view first (Obsidian ≥ 1.7), otherwise the
+			// restored source mode overwrites our change once the view loads.
+			const deferrable = leaf as WorkspaceLeaf & {
+				loadIfDeferred?: () => Promise<void>;
+			};
+			if (deferrable.loadIfDeferred) await deferrable.loadIfDeferred();
+			await leaf.setViewState({ ...vs, state: { ...state, mode: "preview" } });
+		}
+	}
+
+	/** Flip a markdown view to Reading view if its note has an arena block. */
+	private async switchToReadingIfArena(view: MarkdownView): Promise<void> {
+		if (!view.file || view.getMode() === "preview") return;
+		const content = await this.app.vault.cachedRead(view.file);
+		if (!this.hasArenaBlock(content)) return;
+		await view.leaf.setViewState({
+			type: "markdown",
+			state: { ...view.getState(), mode: "preview" },
+		});
+	}
+
+	/** True if the note has a fenced ```arena code block. */
+	private hasArenaBlock(content: string): boolean {
+		return /^[ \t]*`{3,}[ \t]*arena\b/m.test(content);
 	}
 
 	/** Re-render every live grid (used when settings change). */
@@ -226,18 +309,20 @@ export default class ArenaChannelsPlugin extends Plugin {
 	 * affects panes that actually show an arena block.
 	 */
 	private applyFullWidth(el: HTMLElement, on: boolean): void {
+		let tries = 0;
 		const apply = () => {
 			const view = el.closest<HTMLElement>(
 				".markdown-source-view, .markdown-preview-view",
 			);
-			view?.toggleClass("arena-full-width", on);
+			if (view) {
+				view.toggleClass("arena-full-width", on);
+				return;
+			}
+			// The block is still detached while the note renders, and how many
+			// frames that takes varies by view mode, so keep looking briefly.
+			if (++tries < 10) el.win.requestAnimationFrame(apply);
 		};
-		if (el.isConnected) {
-			apply();
-		} else {
-			// In live preview the element may not be attached yet.
-			el.win.requestAnimationFrame(apply);
-		}
+		apply();
 	}
 
 	private renderCell(grid: HTMLElement, b: ArenaBlock, params: BlockParams): void {
