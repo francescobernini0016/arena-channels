@@ -5,7 +5,6 @@ import {
 	Notice,
 	Plugin,
 	TFile,
-	WorkspaceLeaf,
 } from "obsidian";
 import {
 	ArenaBlock,
@@ -99,7 +98,7 @@ export default class ArenaChannelsPlugin extends Plugin {
 		this.registerEvent(
 			this.app.workspace.on("active-leaf-change", (leaf) => {
 				if (leaf?.view instanceof MarkdownView) {
-					this.switchToReadingIfArena(leaf.view);
+					void this.switchToReadingIfArena(leaf.view);
 				}
 			}),
 		);
@@ -151,12 +150,9 @@ export default class ArenaChannelsPlugin extends Plugin {
 			if (!(file instanceof TFile)) continue;
 			const content = await this.app.vault.cachedRead(file);
 			if (!this.hasArenaBlock(content)) continue;
-			// Materialize a deferred view first (Obsidian ≥ 1.7), otherwise the
-			// restored source mode overwrites our change once the view loads.
-			const deferrable = leaf as WorkspaceLeaf & {
-				loadIfDeferred?: () => Promise<void>;
-			};
-			if (deferrable.loadIfDeferred) await deferrable.loadIfDeferred();
+			// Materialize a deferred view first, otherwise the restored source
+			// mode overwrites our change once the view loads.
+			await leaf.loadIfDeferred();
 			await leaf.setViewState({ ...vs, state: { ...state, mode: "preview" } });
 		}
 	}
